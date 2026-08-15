@@ -46,7 +46,7 @@ export const vehiclesRelations = relations(vehicles, ({ one }) => ({
 export const insertVehicleSchema = createInsertSchema(vehicles).extend({
   placa: z.string().trim().min(3, "La placa es muy corta").max(20, "La placa es demasiado larga").toUpperCase(),
   tipo: z.enum(["carro", "moto", "camioneta", "bicicleta"], {
-    errorMap: () => ({ message: "El tipo de vehículo no es válido" }),
+    message: "El tipo de vehículo no es válido",
   }),
   ownerName: z.string().trim().min(2, "El nombre del propietario es muy corto").max(255).optional().or(z.literal("")),
   ownerPhone: z.string().trim().optional().or(z.literal("")),

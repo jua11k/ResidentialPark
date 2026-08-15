@@ -52,7 +52,7 @@ export const parkingRecordsRelations = relations(parkingRecords, ({ one }) => ({
 // ─── ZOD SCHEMAS ──────────────────────────────────────────────────────────────
 export const insertParkingRecordSchema = createInsertSchema(parkingRecords).extend({
   status: z.enum(["inside", "completed", "cancelled"], {
-    errorMap: () => ({ message: "El estado del registro no es válido" }),
+    message: "El estado del registro no es válido",
   }),
   observations: z.string().trim().max(500, "Las observaciones son demasiado largas").optional().or(z.literal("")),
 });

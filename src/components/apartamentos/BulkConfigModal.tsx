@@ -54,10 +54,10 @@ export default function BulkConfigModal({
     const result = await createBulkApartmentsAction(tenantId, complexId, blockNames, config, 2);
     setSubmitting(false);
 
-    if (result.success && result.data) {
+    if (result.success && "data" in result && result.data) {
       onSuccess(result.data);
     } else {
-      toast.error(result.error ?? "Ocurrió un error");
+      toast.error("error" in result ? (result.error as any) : "Ocurrió un error");
     }
   }
 

@@ -26,7 +26,7 @@ export const insertUserSchema = createInsertSchema(users).extend({
   name: z.string().trim().min(2, "El nombre es muy corto").max(255, "El nombre es demasiado largo"),
   email: z.string().trim().email("El formato del correo es inválido"),
   role: z.enum(["superadmin", "admin", "operator", "viewer"], {
-    errorMap: () => ({ message: "El rol no es válido" }),
+    message: "El rol no es válido",
   }),
 });
 
