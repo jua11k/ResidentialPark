@@ -9,6 +9,7 @@ import {
 } from "@/services/vehicle-service";
 import { insertVehicleSchema } from "@/db/schema/vehicles";
 import { revalidatePath } from "next/cache";
+import { checkApartmentVehicleLimit } from "@/services/public-service";
 import { z } from "zod";
 
 type ActionResponse<T> = {
@@ -112,5 +113,34 @@ export async function getVehiclesByApartmentAction(
     return { success: true, data: list };
   } catch (e) {
     return { success: false, error: "Error al cargar los vehículos del apartamento." };
+  }
+}
+
+// ─── REGISTRO PÚBLICO (PROPIETARIOS) ──────────────────────────────────────────
+export async function registerPublicVehicleAction(
+  tenantId: string,
+  rawData: unknown,
+): Promise<ActionResponse<any>> {
+  const parsed = insertVehicleSchema.safeParse(rawData);
+  if (!parsed.success) {
+    return {
+      success: false,
+      validationErrors: parsed.error.flatten().fieldErrors,
+      error: "Datos del vehículo inválidos.",
+    };
+  }
+
+  try {
+    // 1. Verificar límite de vehículos
+    const limitCheck = await checkApartmentVehicleLimit(tenantId, parsed.data.apartmentId);
+    if (!limitCheck.allowed) {
+      return { success: false, error: limitCheck.error };
+    }
+
+    // 2. Crear vehículo
+    const vehicle = await createVehicle(tenantId, { ...parsed.data, tenantId });
+    return { success: true, data: vehicle };
+  } catch (e: any) {
+    return { success: false, error: e.message ?? "Error al registrar el vehículo." };
   }
 }
