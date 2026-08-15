@@ -1,0 +1,388 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import "tailwindcss";
+
+/* ─── Safe Areas (ADN Capacitor / Mobile-First) ──────────────────────────────── */
+:root {
+  --font-sans: 'Inter', system-ui, sans-serif;
+
+  /* Brand Colors */
+  --primary: 221 83% 53%;
+  --primary-foreground: 210 40% 98%;
+  --primary-glow: rgba(59, 130, 246, 0.3);
+
+  /* Semantic */
+  --background: 224 71% 4%;
+  --surface: 223 47% 10%;
+  --surface-2: 220 35% 14%;
+  --border: 220 20% 22%;
+  --foreground: 210 40% 98%;
+  --muted: 215 25% 55%;
+  --muted-foreground: 215 20% 65%;
+
+  /* Status */
+  --success: 142 71% 45%;
+  --success-bg: 142 60% 8%;
+  --warning: 38 92% 50%;
+  --warning-bg: 38 80% 8%;
+  --danger: 0 72% 51%;
+  --danger-bg: 0 60% 8%;
+  --info: 199 89% 48%;
+  --info-bg: 199 70% 8%;
+}
+
+/* ─── Base ────────────────────────────────────────────────────────────────────── */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  /* Safe areas for Capacitor APK */
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+/* ─── Glassmorphism Utility ──────────────────────────────────────────────────── */
+.glass {
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.glass-surface {
+  background: hsl(var(--surface));
+  border: 1px solid hsl(var(--border));
+}
+
+/* ─── Card ────────────────────────────────────────────────────────────────────── */
+.card {
+  background: hsl(var(--surface));
+  border: 1px solid hsl(var(--border));
+  border-radius: 0.75rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+  border-color: hsl(var(--primary) / 0.4);
+  box-shadow: 0 0 20px hsl(var(--primary) / 0.08);
+}
+
+/* ─── Buttons (Touch Targets ≥ 44px) ────────────────────────────────────────── */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 44px;
+  padding: 0 1.25rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  font-size: 0.875rem;
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 12px hsl(var(--primary) / 0.3);
+}
+
+.btn-primary:hover {
+  opacity: 0.9;
+  box-shadow: 0 4px 20px hsl(var(--primary) / 0.45);
+  transform: translateY(-1px);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 44px;
+  padding: 0 1.25rem;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  font-size: 0.875rem;
+  background: hsl(var(--surface-2));
+  color: hsl(var(--foreground));
+  border: 1px solid hsl(var(--border));
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-secondary:hover {
+  background: hsl(var(--border));
+}
+
+.btn-danger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 44px;
+  padding: 0 1.25rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  font-size: 0.875rem;
+  background: hsl(var(--danger) / 0.15);
+  color: hsl(var(--danger));
+  border: 1px solid hsl(var(--danger) / 0.3);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-danger:hover {
+  background: hsl(var(--danger) / 0.25);
+}
+
+.btn-success {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 44px;
+  padding: 0 1.25rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  font-size: 0.875rem;
+  background: hsl(var(--success) / 0.15);
+  color: hsl(var(--success));
+  border: 1px solid hsl(var(--success) / 0.3);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-success:hover {
+  background: hsl(var(--success) / 0.25);
+}
+
+/* ─── Inputs (Touch Targets ≥ 44px) ─────────────────────────────────────────── */
+.input {
+  width: 100%;
+  min-height: 44px;
+  padding: 0.625rem 0.875rem;
+  background: hsl(var(--surface-2));
+  border: 1px solid hsl(var(--border));
+  border-radius: 0.5rem;
+  color: hsl(var(--foreground));
+  font-size: 0.9375rem;
+  font-family: var(--font-sans);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  outline: none;
+  -webkit-appearance: none;
+}
+
+.input:focus {
+  border-color: hsl(var(--primary));
+  box-shadow: 0 0 0 3px hsl(var(--primary) / 0.2);
+}
+
+.input::placeholder {
+  color: hsl(var(--muted));
+}
+
+.input.error {
+  border-color: hsl(var(--danger));
+  box-shadow: 0 0 0 3px hsl(var(--danger) / 0.15);
+}
+
+.input-label {
+  display: block;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: hsl(var(--muted-foreground));
+  margin-bottom: 0.375rem;
+}
+
+.input-error {
+  font-size: 0.75rem;
+  color: hsl(var(--danger));
+  margin-top: 0.25rem;
+}
+
+/* ─── Badge ───────────────────────────────────────────────────────────────────── */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.625rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.badge-success {
+  background: hsl(var(--success-bg));
+  color: hsl(var(--success));
+  border: 1px solid hsl(var(--success) / 0.25);
+}
+
+.badge-danger {
+  background: hsl(var(--danger-bg));
+  color: hsl(var(--danger));
+  border: 1px solid hsl(var(--danger) / 0.25);
+}
+
+.badge-warning {
+  background: hsl(var(--warning-bg));
+  color: hsl(var(--warning));
+  border: 1px solid hsl(var(--warning) / 0.25);
+}
+
+.badge-info {
+  background: hsl(var(--info-bg));
+  color: hsl(var(--info));
+  border: 1px solid hsl(var(--info) / 0.25);
+}
+
+.badge-neutral {
+  background: hsl(var(--surface-2));
+  color: hsl(var(--muted-foreground));
+  border: 1px solid hsl(var(--border));
+}
+
+/* ─── Scrollbar ───────────────────────────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: hsl(var(--background));
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--border));
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted));
+}
+
+/* ─── Animations ──────────────────────────────────────────────────────────────── */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(-8px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 8px hsl(var(--success) / 0.4); }
+  50% { box-shadow: 0 0 20px hsl(var(--success) / 0.7); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease forwards;
+}
+
+.animate-slide-in {
+  animation: slideIn 0.3s ease forwards;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* ─── Select ──────────────────────────────────────────────────────────────────── */
+select.input {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%236b7280'%3E%3Cpath fill-rule='evenodd' d='M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z' clip-rule='evenodd' /%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.875rem center;
+  background-size: 1rem;
+  padding-right: 2.5rem;
+  cursor: pointer;
+}
+
+/* ─── Table ───────────────────────────────────────────────────────────────────── */
+.table-container {
+  overflow-x: auto;
+  border-radius: 0.75rem;
+  border: 1px solid hsl(var(--border));
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+thead {
+  background: hsl(var(--surface-2));
+}
+
+thead th {
+  padding: 0.875rem 1rem;
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: hsl(var(--muted-foreground));
+  white-space: nowrap;
+}
+
+tbody tr {
+  border-top: 1px solid hsl(var(--border));
+  transition: background 0.15s ease;
+}
+
+tbody tr:hover {
+  background: hsl(var(--surface-2));
+}
+
+tbody td {
+  padding: 0.875rem 1rem;
+  color: hsl(var(--foreground));
+  vertical-align: middle;
+}
+
+/* ─── Divider ─────────────────────────────────────────────────────────────────── */
+.divider {
+  border: none;
+  border-top: 1px solid hsl(var(--border));
+  margin: 0;
+}
+
+/* ─── Loading spinner ─────────────────────────────────────────────────────────── */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.spinner {
+  width: 1.25rem;
+  height: 1.25rem;
+  border: 2px solid hsl(var(--border));
+  border-top-color: hsl(var(--primary));
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
