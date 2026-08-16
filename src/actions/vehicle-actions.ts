@@ -131,6 +131,28 @@ export async function registerPublicVehicleAction(
   }
 
   try {
+    const { db } = await import("@/db");
+    const { tenants } = await import("@/db/schema/tenants");
+    const { eq } = await import("drizzle-orm");
+
+    const tenant = await db.query.tenants.findFirst({
+      where: eq(tenants.id, tenantId),
+      columns: { config: true },
+    });
+
+    const publicPassword = (tenant?.config as any)?.publicRegistrationPassword;
+
+    if (publicPassword) {
+      const providedPassword = (rawData as any).publicRegistrationPassword;
+      if (providedPassword !== publicPassword) {
+        return {
+          success: false,
+          validationErrors: { publicRegistrationPassword: ["La contraseña del conjunto es incorrecta"] },
+          error: "Contraseña incorrecta",
+        };
+      }
+    }
+
     // 1. Verificar límite de vehículos
     const limitCheck = await checkApartmentVehicleLimit(tenantId, parsed.data.apartmentId);
     if (!limitCheck.allowed) {

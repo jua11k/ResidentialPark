@@ -35,12 +35,15 @@ export async function getPublicComplexData(tenantSlug: string) {
     },
   });
 
+  const publicPassword = (tenant.config as any)?.publicRegistrationPassword;
+
   return {
     tenantId: tenant.id,
     tenantName: tenant.name,
     complexId: complex.id,
     complexName: complex.name,
     blocks: blocksData,
+    hasPassword: !!publicPassword,
   };
 }
 

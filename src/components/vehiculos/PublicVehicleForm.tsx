@@ -7,11 +7,12 @@ import { Loader2, CarFront, CheckCircle2 } from "lucide-react";
 interface PublicVehicleFormProps {
   tenantId: string;
   blocks: any[];
+  hasPassword?: boolean;
 }
 
 const TIPOS = ["carro", "moto", "camioneta", "bicicleta"] as const;
 
-export default function PublicVehicleForm({ tenantId, blocks }: PublicVehicleFormProps) {
+export default function PublicVehicleForm({ tenantId, blocks, hasPassword }: PublicVehicleFormProps) {
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -35,6 +36,7 @@ export default function PublicVehicleForm({ tenantId, blocks }: PublicVehicleFor
       ownerPhone: fd.get("ownerPhone"),
       ownerEmail: fd.get("ownerEmail"),
       apartmentId: fd.get("apartmentId"),
+      publicRegistrationPassword: fd.get("publicRegistrationPassword"),
       tenantId, // Needed to satisfy schema if we pass the whole object
     };
 
@@ -165,6 +167,21 @@ export default function PublicVehicleForm({ tenantId, blocks }: PublicVehicleFor
           <label className="input-label">Modelo/Referencia</label>
           <input name="model" type="text" className="input" placeholder="Spark GT 2022..." />
         </div>
+
+        {hasPassword && (
+          <div style={{ background: "hsl(220, 35%, 12%)", padding: "1rem", borderRadius: "0.5rem", border: "1px solid hsl(220, 20%, 25%)" }}>
+            <label className="input-label">Contraseña del Conjunto *</label>
+            <p style={{ fontSize: "0.75rem", color: "hsl(215, 25%, 55%)", marginBottom: "0.5rem" }}>Requerida para registrar el vehículo.</p>
+            <input 
+              name="publicRegistrationPassword" 
+              type="password" 
+              className={`input ${errors.publicRegistrationPassword ? "error" : ""}`} 
+              placeholder="Ingrese la contraseña"
+              required 
+            />
+            {errors.publicRegistrationPassword && <p className="input-error" style={{ marginTop: "0.25rem" }}>{errors.publicRegistrationPassword}</p>}
+          </div>
+        )}
 
         <hr className="divider" />
 

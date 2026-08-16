@@ -16,6 +16,7 @@ import {
   ShieldCheck,
   Home,
   Users,
+  Settings,
 } from "lucide-react";
 
 interface TenantNavProps {
@@ -25,12 +26,18 @@ interface TenantNavProps {
   userName: string;
 }
 
-const navItems = (slug: string) => [
-  { href: `/${slug}/porteria`, label: "Portería", icon: ShieldCheck },
-  { href: `/${slug}/vehiculos`, label: "Vehículos", icon: Car },
-  { href: `/${slug}/apartamentos`, label: "Apartamentos", icon: Home },
-  { href: `/${slug}/historial`, label: "Historial", icon: History },
-];
+const navItems = (slug: string, role: string) => {
+  const items = [
+    { href: `/${slug}/porteria`, label: "Portería", icon: ShieldCheck },
+    { href: `/${slug}/vehiculos`, label: "Vehículos", icon: Car },
+    { href: `/${slug}/apartamentos`, label: "Apartamentos", icon: Home },
+    { href: `/${slug}/historial`, label: "Historial", icon: History },
+  ];
+  if (role === "admin" || role === "superadmin") {
+    items.push({ href: `/${slug}/configuracion`, label: "Configuración", icon: Settings });
+  }
+  return items;
+};
 
 export default function TenantNav({ tenantName, tenantSlug, userRole, userName }: TenantNavProps) {
   const pathname = usePathname();
@@ -45,7 +52,7 @@ export default function TenantNav({ tenantName, tenantSlug, userRole, userName }
     router.push("/login");
   }
 
-  const items = navItems(tenantSlug);
+  const items = navItems(tenantSlug, userRole);
 
   return (
     <>
