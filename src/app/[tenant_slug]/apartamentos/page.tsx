@@ -65,6 +65,11 @@ export default async function ApartamentosPage({
       blocksList={blocksList as any}
       totalApartments={totalApartments}
       occupiedSpots={occupiedSpots}
+      parkingSpots={{
+        car: complex.carParkingSpots,
+        moto: complex.motoParkingSpots,
+        bike: complex.bikeParkingSpots,
+      }}
     />
   );
 }
