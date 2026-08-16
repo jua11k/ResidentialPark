@@ -19,7 +19,6 @@ export const residentialComplexes = residentialParkSchema.table("residential_com
   nit: varchar("nit", { length: 50 }),
   phone: varchar("phone", { length: 50 }),
   email: varchar("email", { length: 255 }),
-  registrationPassword: varchar("registration_password", { length: 100 }),
   totalParkingSpots: integer("total_parking_spots").default(0),
   status: varchar("status", { length: 50 }).default("active").notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
