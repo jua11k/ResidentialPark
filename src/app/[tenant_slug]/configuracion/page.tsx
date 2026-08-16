@@ -54,6 +54,7 @@ export default async function TenantConfigPage({
 
       <TenantConfigClient
         tenantId={tenant.id}
+        tenantSlug={tenant_slug}
         initialPublicPassword={publicPassword}
       />
     </div>
