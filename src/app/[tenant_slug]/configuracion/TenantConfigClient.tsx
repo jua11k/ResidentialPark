@@ -127,7 +127,8 @@ export default function TenantConfigClient({
             {saving ? "Guardando..." : "Guardar Cambios"}
           </button>
         </div>
-      </form>
+        </form>
+      </div>
     </div>
   );
 }
