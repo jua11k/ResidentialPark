@@ -35,27 +35,26 @@ export async function getPublicComplexData(tenantSlug: string) {
     },
   });
 
-  // Contar vehículos actualmente adentro por tipo para calcular disponibilidad
-  const activeRecords = await db
-    .select({ vehicleId: parkingRecords.vehicleId })
+  // Contar vehículos actualmente adentro por tipo usando SQL GROUP BY
+  const counts = await db
+    .select({
+      tipo: vehicles.tipo,
+      count: count(),
+    })
     .from(parkingRecords)
-    .where(and(eq(parkingRecords.tenantId, tenant.id), eq(parkingRecords.status, "inside")));
+    .innerJoin(vehicles, eq(parkingRecords.vehicleId, vehicles.id))
+    .where(and(eq(parkingRecords.tenantId, tenant.id), eq(parkingRecords.status, "inside")))
+    .groupBy(vehicles.tipo);
 
   let carOccupied = 0;
   let motoOccupied = 0;
   let bikeOccupied = 0;
 
-  if (activeRecords.length > 0) {
-    const activeVehicleIds = activeRecords.map((r) => r.vehicleId);
-    const activeVehicles = await db.query.vehicles.findMany({
-      where: inArray(vehicles.id, activeVehicleIds),
-      columns: { tipo: true },
-    });
-    for (const v of activeVehicles) {
-      if (v.tipo === "carro" || v.tipo === "camioneta") carOccupied++;
-      else if (v.tipo === "moto") motoOccupied++;
-      else if (v.tipo === "bicicleta") bikeOccupied++;
-    }
+  for (const row of counts) {
+    const c = Number(row.count);
+    if (row.tipo === "carro" || row.tipo === "camioneta") carOccupied += c;
+    else if (row.tipo === "moto") motoOccupied += c;
+    else if (row.tipo === "bicicleta") bikeOccupied += c;
   }
 
   const carTotal = complex.carParkingSpots;

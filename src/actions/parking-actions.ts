@@ -104,24 +104,24 @@ export async function registerEntryAction(
         limit = Number(value);
       }
 
-      // Contar cuántos vehículos del mismo tipo están adentro
-      const activeVehicleIds = (await db
-        .select({ vehicleId: parkingRecords.vehicleId })
+      // Contar vehículos actualmente adentro por tipo usando SQL GROUP BY
+      const { count: countFn } = await import("drizzle-orm");
+      const counts = await db
+        .select({
+          tipo: vehicles.tipo,
+          count: countFn(),
+        })
         .from(parkingRecords)
+        .innerJoin(vehicles, eq(parkingRecords.vehicleId, vehicles.id))
         .where(and(eq(parkingRecords.tenantId, tenantId), eq(parkingRecords.status, "inside")))
-      ).map((r) => r.vehicleId);
+        .groupBy(vehicles.tipo);
 
       let occupied = 0;
-      if (activeVehicleIds.length > 0) {
-        const activeVehicles = await db.query.vehicles.findMany({
-          where: inArray(vehicles.id, activeVehicleIds),
-          columns: { tipo: true },
-        });
-        for (const v of activeVehicles) {
-          if (isCar && (v.tipo === "carro" || v.tipo === "camioneta")) occupied++;
-          else if (isMoto && v.tipo === "moto") occupied++;
-          else if (isBike && v.tipo === "bicicleta") occupied++;
-        }
+      for (const row of counts) {
+        const c = Number(row.count);
+        if (isCar && (row.tipo === "carro" || row.tipo === "camioneta")) occupied += c;
+        else if (isMoto && row.tipo === "moto") occupied += c;
+        else if (isBike && row.tipo === "bicicleta") occupied += c;
       }
 
       if (occupied >= limit) {
