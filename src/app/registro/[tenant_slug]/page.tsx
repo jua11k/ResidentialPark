@@ -141,6 +141,7 @@ export default async function PublicRegistrationPage({
           <div style={{ flex: "1", maxWidth: "540px", minWidth: "300px" }}>
             <PublicVehicleForm 
               tenantId={data.tenantId} 
+              complexId={data.complexId}
               blocks={data.blocks}
               hasPassword={data.hasPassword}
               parking={data.parking}

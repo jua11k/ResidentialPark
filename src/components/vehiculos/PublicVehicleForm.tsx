@@ -6,6 +6,7 @@ import { Loader2, CarFront, CheckCircle2 } from "lucide-react";
 
 interface PublicVehicleFormProps {
   tenantId: string;
+  complexId: string;
   blocks: any[];
   hasPassword?: boolean;
   parking?: {
@@ -17,7 +18,7 @@ interface PublicVehicleFormProps {
 
 const TIPOS = ["carro", "moto", "camioneta", "bicicleta"] as const;
 
-export default function PublicVehicleForm({ tenantId, blocks, hasPassword, parking }: PublicVehicleFormProps) {
+export default function PublicVehicleForm({ tenantId, complexId, blocks, hasPassword, parking }: PublicVehicleFormProps) {
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -57,6 +58,7 @@ export default function PublicVehicleForm({ tenantId, blocks, hasPassword, parki
       apartmentId: fd.get("apartmentId"),
       publicRegistrationPassword: fd.get("publicRegistrationPassword"),
       tenantId, // Needed to satisfy schema if we pass the whole object
+      complexId, // Needed for schema validation
     };
 
     setSubmitting(true);
