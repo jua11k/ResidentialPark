@@ -20,6 +20,10 @@ export const residentialComplexes = residentialParkSchema.table("residential_com
   phone: varchar("phone", { length: 50 }),
   email: varchar("email", { length: 255 }),
   totalParkingSpots: integer("total_parking_spots").default(0),
+  // Cupos independientes por tipo de vehículo (null = sin límite / igual al nro de aptos)
+  carParkingSpots: integer("car_parking_spots"),
+  motoParkingSpots: integer("moto_parking_spots"),
+  bikeParkingSpots: integer("bike_parking_spots"),
   status: varchar("status", { length: 50 }).default("active").notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
@@ -60,6 +64,10 @@ export const apartments = residentialParkSchema.table("apartments", {
   parkingOccupied: boolean("parking_occupied").default(false).notNull(),
   // Máximo de vehículos que puede registrar este apartamento (configurable)
   maxVehicles: integer("max_vehicles").default(2).notNull(),
+  // Bloqueo de acceso por mora u otras razones administrativas
+  accessBlocked: boolean("access_blocked").default(false).notNull(),
+  blockReason: varchar("block_reason", { length: 500 }),
+  blockedAt: timestamp("blocked_at", { withTimezone: true }),
   status: varchar("status", { length: 50 }).default("active").notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),

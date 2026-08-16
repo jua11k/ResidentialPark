@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { getPublicComplexData } from "@/services/public-service";
 import PublicVehicleForm from "@/components/vehiculos/PublicVehicleForm";
-import { Building2, ShieldCheck, CheckCircle2 } from "lucide-react";
+import { Building2, ShieldCheck, CheckCircle2, Car, Bike } from "lucide-react";
 import { Metadata } from "next";
 
 export async function generateMetadata({ params }: { params: Promise<{ tenant_slug: string }> }): Promise<Metadata> {
@@ -71,6 +71,46 @@ export default async function PublicRegistrationPage({
           </p>
         </header>
 
+        {/* Panel de disponibilidad de parqueaderos */}
+        {(data.parking.car.total !== null || data.parking.moto.total !== null || data.parking.bike.total !== null) && (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "0.75rem", justifyContent: "center", marginBottom: "2rem" }}>
+            {data.parking.car.total !== null && (
+              <div style={{
+                display: "flex", alignItems: "center", gap: "0.625rem",
+                background: (data.parking.car.available ?? 0) > 0 ? "hsl(142, 71%, 8%)" : "hsl(0, 60%, 8%)",
+                border: `1px solid ${(data.parking.car.available ?? 0) > 0 ? "hsl(142, 71%, 20%)" : "hsl(0, 72%, 25%)"}`,
+                borderRadius: "0.75rem", padding: "0.625rem 1rem"
+              }}>
+                <Car size={18} style={{ color: (data.parking.car.available ?? 0) > 0 ? "hsl(142, 71%, 45%)" : "hsl(0, 72%, 55%)" }} />
+                <div>
+                  <p style={{ fontSize: "0.7rem", color: "hsl(215, 25%, 55%)", fontWeight: 500 }}>Carros / Camionetas</p>
+                  <p style={{ fontSize: "0.9rem", fontWeight: 700, color: (data.parking.car.available ?? 0) > 0 ? "hsl(142, 71%, 55%)" : "hsl(0, 72%, 65%)" }}>
+                    {(data.parking.car.available ?? 0) > 0 ? `${data.parking.car.available} disponibles` : "Sin cupos"}
+                    <span style={{ fontWeight: 400, color: "hsl(215, 25%, 50%)", marginLeft: "0.25rem", fontSize: "0.75rem" }}>de {data.parking.car.total}</span>
+                  </p>
+                </div>
+              </div>
+            )}
+            {data.parking.moto.total !== null && (
+              <div style={{
+                display: "flex", alignItems: "center", gap: "0.625rem",
+                background: (data.parking.moto.available ?? 0) > 0 ? "hsl(142, 71%, 8%)" : "hsl(0, 60%, 8%)",
+                border: `1px solid ${(data.parking.moto.available ?? 0) > 0 ? "hsl(142, 71%, 20%)" : "hsl(0, 72%, 25%)"}`,
+                borderRadius: "0.75rem", padding: "0.625rem 1rem"
+              }}>
+                <Bike size={18} style={{ color: (data.parking.moto.available ?? 0) > 0 ? "hsl(142, 71%, 45%)" : "hsl(0, 72%, 55%)" }} />
+                <div>
+                  <p style={{ fontSize: "0.7rem", color: "hsl(215, 25%, 55%)", fontWeight: 500 }}>Motos</p>
+                  <p style={{ fontSize: "0.9rem", fontWeight: 700, color: (data.parking.moto.available ?? 0) > 0 ? "hsl(142, 71%, 55%)" : "hsl(0, 72%, 65%)" }}>
+                    {(data.parking.moto.available ?? 0) > 0 ? `${data.parking.moto.available} disponibles` : "Sin cupos"}
+                    <span style={{ fontWeight: 400, color: "hsl(215, 25%, 50%)", marginLeft: "0.25rem", fontSize: "0.75rem" }}>de {data.parking.moto.total}</span>
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         <div style={{ display: "flex", flexWrap: "wrap", gap: "2rem", justifyContent: "center" }}>
           
           {/* Instrucciones (Opcional, lado izquierdo en desktop) */}
@@ -103,6 +143,7 @@ export default async function PublicRegistrationPage({
               tenantId={data.tenantId} 
               blocks={data.blocks}
               hasPassword={data.hasPassword}
+              parking={data.parking}
             />
           </div>
 

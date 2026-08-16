@@ -2,6 +2,7 @@ import { redirect, notFound } from "next/navigation";
 import { cookies } from "next/headers";
 import { db } from "@/db";
 import { tenants } from "@/db/schema/tenants";
+import { residentialComplexes } from "@/db/schema/residential";
 import { eq, and, isNull } from "drizzle-orm";
 import TenantConfigClient from "./TenantConfigClient";
 
@@ -41,6 +42,11 @@ export default async function TenantConfigPage({
 
   const publicPassword = (tenant.config as any)?.publicRegistrationPassword || "";
 
+  const complex = await db.query.residentialComplexes.findFirst({
+    where: and(eq(residentialComplexes.tenantId, tenant.id), isNull(residentialComplexes.deletedAt)),
+    columns: { id: true, carParkingSpots: true, motoParkingSpots: true, bikeParkingSpots: true },
+  });
+
   return (
     <div className="container mx-auto px-4 py-8 max-w-2xl animate-fade-in">
       <div style={{ marginBottom: "2rem" }}>
@@ -54,8 +60,12 @@ export default async function TenantConfigPage({
 
       <TenantConfigClient
         tenantId={tenant.id}
+        complexId={complex?.id ?? ""}
         tenantSlug={tenant_slug}
         initialPublicPassword={publicPassword}
+        initialCarSpots={complex?.carParkingSpots ?? null}
+        initialMotoSpots={complex?.motoParkingSpots ?? null}
+        initialBikeSpots={complex?.bikeParkingSpots ?? null}
       />
     </div>
   );

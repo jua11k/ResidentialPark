@@ -2,20 +2,32 @@
 
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
-import { updateTenantConfigAction } from "@/actions/tenant-actions";
-import { Save, Lock, Link as LinkIcon, Copy } from "lucide-react";
+import { updateTenantConfigAction, updateComplexParkingSpotsAction } from "@/actions/tenant-actions";
+import { Save, Lock, Link as LinkIcon, Copy, ParkingCircle } from "lucide-react";
 
 export default function TenantConfigClient({
   tenantId,
+  complexId,
   tenantSlug,
   initialPublicPassword,
+  initialCarSpots,
+  initialMotoSpots,
+  initialBikeSpots,
 }: {
   tenantId: string;
+  complexId: string;
   tenantSlug: string;
   initialPublicPassword?: string;
+  initialCarSpots?: number | null;
+  initialMotoSpots?: number | null;
+  initialBikeSpots?: number | null;
 }) {
   const [password, setPassword] = useState(initialPublicPassword || "");
   const [saving, setSaving] = useState(false);
+  const [savingSpots, setSavingSpots] = useState(false);
+  const [carSpots, setCarSpots] = useState<string>(initialCarSpots?.toString() ?? "");
+  const [motoSpots, setMotoSpots] = useState<string>(initialMotoSpots?.toString() ?? "");
+  const [bikeSpots, setBikeSpots] = useState<string>(initialBikeSpots?.toString() ?? "");
   const [origin, setOrigin] = useState("");
 
   useEffect(() => {
@@ -34,21 +46,32 @@ export default function TenantConfigClient({
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
-    
     try {
-      const result = await updateTenantConfigAction(tenantId, {
-        publicRegistrationPassword: password,
-      });
-
-      if (result.success) {
-        toast.success("Configuración actualizada correctamente");
-      } else {
-        toast.error(result.error || "Error al actualizar");
-      }
-    } catch (error) {
+      const result = await updateTenantConfigAction(tenantId, { publicRegistrationPassword: password });
+      if (result.success) toast.success("Contraseña actualizada correctamente");
+      else toast.error(result.error || "Error al actualizar");
+    } catch {
       toast.error("Error inesperado al guardar la configuración");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleSaveSpots = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSavingSpots(true);
+    try {
+      const result = await updateComplexParkingSpotsAction(tenantId, complexId, {
+        carParkingSpots:  carSpots  !== "" ? parseInt(carSpots)  : null,
+        motoParkingSpots: motoSpots !== "" ? parseInt(motoSpots) : null,
+        bikeParkingSpots: bikeSpots !== "" ? parseInt(bikeSpots) : null,
+      });
+      if (result.success) toast.success("Cupos actualizados correctamente");
+      else toast.error(result.error || "Error al actualizar los cupos");
+    } catch {
+      toast.error("Error inesperado al guardar los cupos");
+    } finally {
+      setSavingSpots(false);
     }
   };
 
@@ -84,6 +107,68 @@ export default function TenantConfigClient({
             <Copy size={16} />
           </button>
         </div>
+      </div>
+
+      {/* Tarjeta de Parqueaderos */}
+      <div style={{
+        background: "hsl(223, 47%, 10%)",
+        border: "1px solid hsl(220, 20%, 22%)",
+        borderRadius: "1rem",
+        padding: "1.5rem",
+      }}>
+        <h2 style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "1.125rem", fontWeight: 600, color: "white", marginBottom: "1rem" }}>
+          <ParkingCircle size={18} style={{ color: "hsl(221, 83%, 65%)" }} />
+          Capacidad de Parqueaderos
+        </h2>
+        <p style={{ fontSize: "0.8125rem", color: "hsl(215, 25%, 55%)", marginBottom: "1.25rem" }}>
+          Deja el campo en blanco si el número de cupos es igual al número de apartamentos o si no hay restricción para ese tipo. Al configurarlo, el sistema bloqueará la entrada cuando no haya cupos disponibles.
+        </p>
+        <form onSubmit={handleSaveSpots}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "1rem", marginBottom: "1.5rem" }}>
+            <div>
+              <label style={{ display: "block", fontSize: "0.8125rem", fontWeight: 500, color: "hsl(215, 25%, 75%)", marginBottom: "0.4rem" }}>Carros / Camionetas</label>
+              <input
+                type="number"
+                min="0"
+                value={carSpots}
+                onChange={(e) => setCarSpots(e.target.value)}
+                placeholder="Sin límite"
+                className="input-base"
+                style={{ width: "100%" }}
+              />
+            </div>
+            <div>
+              <label style={{ display: "block", fontSize: "0.8125rem", fontWeight: 500, color: "hsl(215, 25%, 75%)", marginBottom: "0.4rem" }}>Motos</label>
+              <input
+                type="number"
+                min="0"
+                value={motoSpots}
+                onChange={(e) => setMotoSpots(e.target.value)}
+                placeholder="Sin límite"
+                className="input-base"
+                style={{ width: "100%" }}
+              />
+            </div>
+            <div>
+              <label style={{ display: "block", fontSize: "0.8125rem", fontWeight: 500, color: "hsl(215, 25%, 75%)", marginBottom: "0.4rem" }}>Bicicletas</label>
+              <input
+                type="number"
+                min="0"
+                value={bikeSpots}
+                onChange={(e) => setBikeSpots(e.target.value)}
+                placeholder="Sin límite"
+                className="input-base"
+                style={{ width: "100%" }}
+              />
+            </div>
+          </div>
+          <div style={{ display: "flex", justifyContent: "flex-end" }}>
+            <button type="submit" disabled={savingSpots} className="btn-primary" style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+              <Save size={16} />
+              {savingSpots ? "Guardando..." : "Guardar Cupos"}
+            </button>
+          </div>
+        </form>
       </div>
 
       {/* Tarjeta de Seguridad */}

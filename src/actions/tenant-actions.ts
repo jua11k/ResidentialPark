@@ -41,3 +41,35 @@ export async function updateTenantConfigAction(
     return { success: false, error: error.message ?? "Error al actualizar la configuración." };
   }
 }
+
+// ─── ACTUALIZAR CUPOS DE PARQUEADERO DEL CONJUNTO ─────────────────────────────
+import { residentialComplexes } from "@/db/schema/residential";
+
+export async function updateComplexParkingSpotsAction(
+  tenantId: string,
+  complexId: string,
+  spots: {
+    carParkingSpots: number | null;
+    motoParkingSpots: number | null;
+    bikeParkingSpots: number | null;
+  },
+): Promise<ActionResponse<any>> {
+  try {
+    const [updated] = await db
+      .update(residentialComplexes)
+      .set({
+        carParkingSpots: spots.carParkingSpots,
+        motoParkingSpots: spots.motoParkingSpots,
+        bikeParkingSpots: spots.bikeParkingSpots,
+      })
+      .where(eq(residentialComplexes.id, complexId))
+      .returning();
+
+    const tenant = await db.query.tenants.findFirst({ where: eq(tenants.id, tenantId) });
+    if (tenant) revalidatePath(`/${tenant.slug}/configuracion`);
+
+    return { success: true, data: updated };
+  } catch (error: any) {
+    return { success: false, error: error.message ?? "Error al actualizar los cupos." };
+  }
+}

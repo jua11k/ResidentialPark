@@ -8,18 +8,37 @@ interface PublicVehicleFormProps {
   tenantId: string;
   blocks: any[];
   hasPassword?: boolean;
+  parking?: {
+    car:  { total: number | null; occupied: number; available: number | null };
+    moto: { total: number | null; occupied: number; available: number | null };
+    bike: { total: number | null; occupied: number; available: number | null };
+  };
 }
 
 const TIPOS = ["carro", "moto", "camioneta", "bicicleta"] as const;
 
-export default function PublicVehicleForm({ tenantId, blocks, hasPassword }: PublicVehicleFormProps) {
+export default function PublicVehicleForm({ tenantId, blocks, hasPassword, parking }: PublicVehicleFormProps) {
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  
   const [selectedBlockId, setSelectedBlockId] = useState("");
+  const [selectedAptId, setSelectedAptId] = useState("");
+  const [selectedTipo, setSelectedTipo] = useState<string>("carro");
   const selectedBlock = blocks.find((b) => b.id === selectedBlockId);
   const apartments = selectedBlock?.apartments ?? [];
+  const selectedApt = apartments.find((a: any) => a.id === selectedAptId);
+  const aptBlocked = selectedApt?.accessBlocked === true;
+
+  // Determinar si hay cupos disponibles para el tipo seleccionado
+  const noSpotsAvailable = (() => {
+    if (!parking) return false;
+    if (selectedTipo === "carro" || selectedTipo === "camioneta") return parking.car.total !== null && parking.car.available === 0;
+    if (selectedTipo === "moto") return parking.moto.total !== null && parking.moto.available === 0;
+    if (selectedTipo === "bicicleta") return parking.bike.total !== null && parking.bike.available === 0;
+    return false;
+  })();
+
+  const canSubmit = !aptBlocked && !noSpotsAvailable;
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -115,7 +134,14 @@ export default function PublicVehicleForm({ tenantId, blocks, hasPassword }: Pub
           </div>
           <div>
             <label className="input-label">Apartamento *</label>
-            <select name="apartmentId" className={`input select ${errors.apartmentId ? "error" : ""}`} required disabled={!selectedBlockId}>
+            <select
+              name="apartmentId"
+              value={selectedAptId}
+              onChange={(e) => setSelectedAptId(e.target.value)}
+              className={`input select ${errors.apartmentId ? "error" : ""}`}
+              required
+              disabled={!selectedBlockId}
+            >
               <option value="">Seleccionar...</option>
               {apartments.map((a: any) => (
                 <option key={a.id} value={a.id}>
@@ -126,6 +152,15 @@ export default function PublicVehicleForm({ tenantId, blocks, hasPassword }: Pub
             {errors.apartmentId && <p className="input-error" style={{ marginTop: "0.25rem" }}>{errors.apartmentId}</p>}
           </div>
         </div>
+
+        {/* Alerta de apartamento bloqueado */}
+        {aptBlocked && selectedAptId && (
+          <div style={{ background: "hsl(0, 60%, 8%)", border: "1px solid hsl(0, 72%, 25%)", borderRadius: "0.5rem", padding: "1rem", color: "hsl(0, 72%, 65%)", fontSize: "0.875rem", fontWeight: 500 }}>
+            🔒 {selectedApt?.blockReason
+              ? `Acceso restringido: ${selectedApt.blockReason}`
+              : "Este apartamento tiene el acceso restringido. Comuníquese con la administración."}
+          </div>
+        )}
 
         {/* Placa y Tipo */}
         <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: "1rem" }}>
@@ -143,7 +178,13 @@ export default function PublicVehicleForm({ tenantId, blocks, hasPassword }: Pub
           </div>
           <div>
             <label className="input-label">Tipo *</label>
-            <select name="tipo" className="input select" required>
+            <select
+              name="tipo"
+              value={selectedTipo}
+              onChange={(e) => setSelectedTipo(e.target.value)}
+              className="input select"
+              required
+            >
               {TIPOS.map((t) => (
                 <option key={t} value={t} style={{ textTransform: "capitalize" }}>{t.charAt(0).toUpperCase() + t.slice(1)}</option>
               ))}
@@ -214,7 +255,19 @@ export default function PublicVehicleForm({ tenantId, blocks, hasPassword }: Pub
           </div>
         </div>
 
-        <button type="submit" disabled={submitting} className="btn-primary" style={{ marginTop: "1rem", height: "48px", fontSize: "1.05rem" }}>
+        {/* Alerta sin cupos */}
+        {noSpotsAvailable && (
+          <div style={{ background: "hsl(35, 100%, 5%)", border: "1px solid hsl(35, 100%, 25%)", borderRadius: "0.5rem", padding: "1rem", color: "hsl(35, 100%, 65%)", fontSize: "0.875rem", fontWeight: 500 }}>
+            🚫 No hay cupos disponibles para este tipo de vehículo en este momento.
+          </div>
+        )}
+
+        <button
+          type="submit"
+          disabled={submitting || !canSubmit}
+          className="btn-primary"
+          style={{ marginTop: "1rem", height: "48px", fontSize: "1.05rem", opacity: canSubmit ? 1 : 0.5, cursor: canSubmit ? "pointer" : "not-allowed" }}
+        >
           {submitting ? (
             <><Loader2 size={18} style={{ animation: "spin 0.7s linear infinite" }} /> Procesando...</>
           ) : (
