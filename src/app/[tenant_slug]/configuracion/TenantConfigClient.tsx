@@ -121,7 +121,7 @@ export default function TenantConfigClient({
           Capacidad de Parqueaderos
         </h2>
         <p style={{ fontSize: "0.8125rem", color: "hsl(215, 25%, 55%)", marginBottom: "1.25rem" }}>
-          Deja el campo en blanco si el número de cupos es igual al número de apartamentos o si no hay restricción para ese tipo. Al configurarlo, el sistema bloqueará la entrada cuando no haya cupos disponibles.
+          Deja el campo en blanco si los cupos de ese tipo son iguales al número de apartamentos del conjunto (valor predeterminado). Solo ingresa un número si la capacidad es diferente.
         </p>
         <form onSubmit={handleSaveSpots}>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "1rem", marginBottom: "1.5rem" }}>

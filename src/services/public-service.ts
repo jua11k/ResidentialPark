@@ -62,6 +62,12 @@ export async function getPublicComplexData(tenantSlug: string) {
   const motoTotal = complex.motoParkingSpots;
   const bikeTotal = complex.bikeParkingSpots;
 
+  // Cuando el campo es null, el límite equivale al nro total de apartamentos
+  const totalApartments = blocksData.reduce((sum, b) => sum + b.apartments.length, 0);
+  const effectiveCarTotal  = carTotal  ?? totalApartments;
+  const effectiveMotoTotal = motoTotal ?? totalApartments;
+  const effectiveBikeTotal = bikeTotal ?? totalApartments;
+
   const publicPassword = (tenant.config as any)?.publicRegistrationPassword;
 
   return {
@@ -72,9 +78,9 @@ export async function getPublicComplexData(tenantSlug: string) {
     blocks: blocksData,
     hasPassword: !!publicPassword,
     parking: {
-      car:  { total: carTotal,  occupied: carOccupied,  available: carTotal  !== null ? Math.max(0, carTotal  - carOccupied)  : null },
-      moto: { total: motoTotal, occupied: motoOccupied, available: motoTotal !== null ? Math.max(0, motoTotal - motoOccupied) : null },
-      bike: { total: bikeTotal, occupied: bikeOccupied, available: bikeTotal !== null ? Math.max(0, bikeTotal - bikeOccupied) : null },
+      car:  { total: effectiveCarTotal,  occupied: carOccupied,  available: Math.max(0, effectiveCarTotal  - carOccupied)  },
+      moto: { total: effectiveMotoTotal, occupied: motoOccupied, available: Math.max(0, effectiveMotoTotal - motoOccupied) },
+      bike: { total: effectiveBikeTotal, occupied: bikeOccupied, available: Math.max(0, effectiveBikeTotal - bikeOccupied) },
     },
   };
 }

@@ -85,38 +85,48 @@ export async function registerEntryAction(
     });
 
     if (complex) {
-      const tipo = vehicle.tipo; // "carro" | "moto" | "camioneta" | "bicicleta"
+      const tipo = vehicle.tipo;
       const isCar = tipo === "carro" || tipo === "camioneta";
       const isMoto = tipo === "moto";
       const isBike = tipo === "bicicleta";
 
-      const limit = isCar ? complex.carParkingSpots : isMoto ? complex.motoParkingSpots : isBike ? complex.bikeParkingSpots : null;
+      const configuredLimit = isCar ? complex.carParkingSpots : isMoto ? complex.motoParkingSpots : isBike ? complex.bikeParkingSpots : null;
 
-      if (limit !== null) {
-        // Contar cuántos vehículos del mismo tipo están adentro
-        const activeVehicleIds = (await db
-          .select({ vehicleId: parkingRecords.vehicleId })
-          .from(parkingRecords)
-          .where(and(eq(parkingRecords.tenantId, tenantId), eq(parkingRecords.status, "inside")))
-        ).map((r) => r.vehicleId);
+      // Si el límite no está configurado, usar el nro total de apartamentos del conjunto
+      let limit = configuredLimit;
+      if (limit === null) {
+        const { count: countFn, isNull: isNullFn } = await import("drizzle-orm");
+        const { apartments: apartmentsTable } = await import("@/db/schema/residential");
+        const [{ value }] = await db
+          .select({ value: countFn() })
+          .from(apartmentsTable)
+          .where(and(eq(apartmentsTable.tenantId, tenantId), isNullFn(apartmentsTable.deletedAt)));
+        limit = Number(value);
+      }
 
-        let occupied = 0;
-        if (activeVehicleIds.length > 0) {
-          const activeVehicles = await db.query.vehicles.findMany({
-            where: inArray(vehicles.id, activeVehicleIds),
-            columns: { tipo: true },
-          });
-          for (const v of activeVehicles) {
-            if (isCar && (v.tipo === "carro" || v.tipo === "camioneta")) occupied++;
-            else if (isMoto && v.tipo === "moto") occupied++;
-            else if (isBike && v.tipo === "bicicleta") occupied++;
-          }
+      // Contar cuántos vehículos del mismo tipo están adentro
+      const activeVehicleIds = (await db
+        .select({ vehicleId: parkingRecords.vehicleId })
+        .from(parkingRecords)
+        .where(and(eq(parkingRecords.tenantId, tenantId), eq(parkingRecords.status, "inside")))
+      ).map((r) => r.vehicleId);
+
+      let occupied = 0;
+      if (activeVehicleIds.length > 0) {
+        const activeVehicles = await db.query.vehicles.findMany({
+          where: inArray(vehicles.id, activeVehicleIds),
+          columns: { tipo: true },
+        });
+        for (const v of activeVehicles) {
+          if (isCar && (v.tipo === "carro" || v.tipo === "camioneta")) occupied++;
+          else if (isMoto && v.tipo === "moto") occupied++;
+          else if (isBike && v.tipo === "bicicleta") occupied++;
         }
+      }
 
-        if (occupied >= limit) {
-          const typeLabel = isCar ? "carros/camionetas" : isMoto ? "motos" : "bicicletas";
-          return { success: false, error: `No hay cupos disponibles para ${typeLabel} (${limit} cupos, todos ocupados).` };
-        }
+      if (occupied >= limit) {
+        const typeLabel = isCar ? "carros/camionetas" : isMoto ? "motos" : "bicicletas";
+        return { success: false, error: `No hay cupos disponibles para ${typeLabel} (${limit} cupos, todos ocupados).` };
       }
     }
 
