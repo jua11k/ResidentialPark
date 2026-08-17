@@ -11,11 +11,10 @@ interface ApartamentosClientProps {
   complexName: string;
   blocksList: any[];
   totalApartments: number;
-  occupiedSpots: number;
-  parkingSpots?: {
-    car: number | null;
-    moto: number | null;
-    bike: number | null;
+  parkingData: {
+    car: { total: number | null; occupied: number };
+    moto: { total: number | null; occupied: number };
+    bike: { total: number | null; occupied: number };
   };
 }
 
@@ -25,8 +24,7 @@ export default function ApartamentosClient({
   complexName,
   blocksList,
   totalApartments,
-  occupiedSpots,
-  parkingSpots,
+  parkingData,
 }: ApartamentosClientProps) {
   const [showBulkConfig, setShowBulkConfig] = useState(false);
   const [selectedApt, setSelectedApt] = useState<any | null>(null);
@@ -34,10 +32,9 @@ export default function ApartamentosClient({
   const [isBlocking, setIsBlocking] = useState(false);
 
   // Calcular la capacidad de parqueaderos (si es null asume totalApartments)
-  const carTotal = parkingSpots?.car ?? totalApartments;
-  const motoTotal = parkingSpots?.moto ?? totalApartments;
-  const bikeTotal = parkingSpots?.bike ?? totalApartments;
-  const totalSpots = carTotal + motoTotal + bikeTotal;
+  const carTotal = parkingData.car.total ?? totalApartments;
+  const motoTotal = parkingData.moto.total ?? totalApartments;
+  const bikeTotal = parkingData.bike.total ?? totalApartments;
 
   async function handleBlock() {
     if (!selectedApt) return;
@@ -89,21 +86,60 @@ export default function ApartamentosClient({
         </button>
       </div>
 
-      {/* Stats */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: "0.75rem" }}>
-        {[
-          { label: "Bloques", value: blocksList.length, icon: "🏗️" },
-          { label: "Total Aptos", value: totalApartments, icon: "🏠" },
-          { label: "Total Cupos", value: totalSpots, icon: "🅿️" },
-          { label: "Ocupados", value: occupiedSpots, icon: "🔴", color: "hsl(0, 72%, 60%)" },
-          { label: "Libres", value: totalSpots - occupiedSpots, icon: "🟢", color: "hsl(142, 71%, 60%)" },
-        ].map((s) => (
-          <div key={s.label} className="card" style={{ padding: "1rem", textAlign: "center" }}>
-            <p style={{ fontSize: "1.375rem", marginBottom: "0.25rem" }}>{s.icon}</p>
-            <p style={{ fontSize: "1.5rem", fontWeight: 800, color: s.color ?? "hsl(210, 40%, 98%)" }}>{s.value}</p>
-            <p style={{ fontSize: "0.75rem", color: "hsl(215, 25%, 55%)" }}>{s.label}</p>
+      {/* Stats Fila 1: Resumen General */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "0.75rem" }}>
+        <div className="card" style={{ padding: "1.25rem", display: "flex", alignItems: "center", gap: "1rem" }}>
+          <div style={{ fontSize: "2rem", background: "hsl(220, 20%, 15%)", padding: "0.5rem", borderRadius: "0.5rem" }}>🏗️</div>
+          <div>
+            <p style={{ fontSize: "0.875rem", color: "hsl(215, 25%, 55%)", fontWeight: 600 }}>Total Bloques</p>
+            <p style={{ fontSize: "1.5rem", fontWeight: 800, color: "hsl(210, 40%, 98%)", lineHeight: 1 }}>{blocksList.length}</p>
           </div>
-        ))}
+        </div>
+        <div className="card" style={{ padding: "1.25rem", display: "flex", alignItems: "center", gap: "1rem" }}>
+          <div style={{ fontSize: "2rem", background: "hsl(220, 20%, 15%)", padding: "0.5rem", borderRadius: "0.5rem" }}>🏠</div>
+          <div>
+            <p style={{ fontSize: "0.875rem", color: "hsl(215, 25%, 55%)", fontWeight: 600 }}>Total Apartamentos</p>
+            <p style={{ fontSize: "1.5rem", fontWeight: 800, color: "hsl(210, 40%, 98%)", lineHeight: 1 }}>{totalApartments}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Stats Fila 2: Capacidad de Parqueaderos */}
+      <div>
+        <h2 style={{ fontSize: "1rem", fontWeight: 700, color: "hsl(210, 40%, 98%)", marginBottom: "0.75rem" }}>Capacidad de Parqueaderos</h2>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: "0.75rem" }}>
+          {[
+            { label: "Carros", icon: "🚗", total: carTotal, occupied: parkingData.car.occupied },
+            { label: "Motos", icon: "🏍️", total: motoTotal, occupied: parkingData.moto.occupied },
+            { label: "Bicicletas", icon: "🚲", total: bikeTotal, occupied: parkingData.bike.occupied },
+          ].map((v) => {
+            const free = Math.max(0, v.total - v.occupied);
+            return (
+              <div key={v.label} className="card" style={{ padding: "1.25rem" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1rem" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                    <span style={{ fontSize: "1.5rem" }}>{v.icon}</span>
+                    <span style={{ fontWeight: 700, color: "hsl(210, 40%, 98%)" }}>{v.label}</span>
+                  </div>
+                  <span style={{ fontSize: "0.875rem", fontWeight: 700, color: "hsl(215, 25%, 65%)", background: "hsl(220, 20%, 15%)", padding: "0.25rem 0.625rem", borderRadius: "1rem" }}>
+                    Total: {v.total}
+                  </span>
+                </div>
+                
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.5rem" }}>
+                  <div style={{ background: "hsl(0, 60%, 12%)", border: "1px solid hsl(0, 72%, 25%)", borderRadius: "0.5rem", padding: "0.5rem", textAlign: "center" }}>
+                    <p style={{ fontSize: "0.75rem", color: "hsl(0, 72%, 65%)", fontWeight: 600, marginBottom: "0.125rem" }}>Ocupados</p>
+                    <p style={{ fontSize: "1.125rem", color: "hsl(0, 72%, 65%)", fontWeight: 800 }}>{v.occupied}</p>
+                  </div>
+                  <div style={{ background: "hsl(142, 71%, 12%)", border: "1px solid hsl(142, 71%, 25%)", borderRadius: "0.5rem", padding: "0.5rem", textAlign: "center" }}>
+                    <p style={{ fontSize: "0.75rem", color: "hsl(142, 71%, 45%)", fontWeight: 600, marginBottom: "0.125rem" }}>Libres</p>
+                    <p style={{ fontSize: "1.125rem", color: "hsl(142, 71%, 45%)", fontWeight: 800 }}>{free}</p>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       {/* Bloques */}

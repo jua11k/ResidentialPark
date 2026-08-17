@@ -3,7 +3,8 @@ import { redirect } from "next/navigation";
 import { db } from "@/db";
 import { residentialComplexes, blocks, apartments } from "@/db/schema/residential";
 import { vehicles } from "@/db/schema/vehicles";
-import { eq, isNull, and } from "drizzle-orm";
+import { parkingRecords } from "@/db/schema/parking";
+import { eq, isNull, and, count } from "drizzle-orm";
 
 import ApartamentosClient from "@/components/apartamentos/ApartamentosClient";
 
@@ -55,7 +56,28 @@ export default async function ApartamentosPage({
   });
 
   const totalApartments = blocksList.reduce((sum, b) => sum + b.apartments.length, 0);
-  const occupiedSpots = blocksList.reduce((sum, b) => sum + b.apartments.filter((a) => a.parkingOccupied).length, 0);
+
+  // Contar vehículos adentro por tipo usando SQL GROUP BY
+  const counts = await db
+    .select({
+      tipo: vehicles.tipo,
+      count: count(),
+    })
+    .from(parkingRecords)
+    .innerJoin(vehicles, eq(parkingRecords.vehicleId, vehicles.id))
+    .where(and(eq(parkingRecords.tenantId, session.tenantId), eq(parkingRecords.status, "inside")))
+    .groupBy(vehicles.tipo);
+
+  let carOccupied = 0;
+  let motoOccupied = 0;
+  let bikeOccupied = 0;
+
+  for (const row of counts) {
+    const c = Number(row.count);
+    if (row.tipo === "carro" || row.tipo === "camioneta") carOccupied += c;
+    else if (row.tipo === "moto") motoOccupied += c;
+    else if (row.tipo === "bicicleta") bikeOccupied += c;
+  }
 
   return (
     <ApartamentosClient
@@ -64,11 +86,10 @@ export default async function ApartamentosPage({
       complexName={complex.name}
       blocksList={blocksList as any}
       totalApartments={totalApartments}
-      occupiedSpots={occupiedSpots}
-      parkingSpots={{
-        car: complex.carParkingSpots,
-        moto: complex.motoParkingSpots,
-        bike: complex.bikeParkingSpots,
+      parkingData={{
+        car: { total: complex.carParkingSpots, occupied: carOccupied },
+        moto: { total: complex.motoParkingSpots, occupied: motoOccupied },
+        bike: { total: complex.bikeParkingSpots, occupied: bikeOccupied },
       }}
     />
   );
