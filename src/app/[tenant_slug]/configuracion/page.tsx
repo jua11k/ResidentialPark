@@ -41,6 +41,7 @@ export default async function TenantConfigPage({
   }
 
   const publicPassword = (tenant.config as any)?.publicRegistrationPassword || "";
+  const initialLogoUrl = (tenant.config as any)?.logoUrl || null;
 
   const complex = await db.query.residentialComplexes.findFirst({
     where: and(eq(residentialComplexes.tenantId, tenant.id), isNull(residentialComplexes.deletedAt)),
@@ -66,6 +67,7 @@ export default async function TenantConfigPage({
         initialCarSpots={complex?.carParkingSpots ?? null}
         initialMotoSpots={complex?.motoParkingSpots ?? null}
         initialBikeSpots={complex?.bikeParkingSpots ?? null}
+        initialLogoUrl={initialLogoUrl}
       />
     </div>
   );

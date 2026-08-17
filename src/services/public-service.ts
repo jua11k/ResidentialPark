@@ -68,6 +68,7 @@ export async function getPublicComplexData(tenantSlug: string) {
   const effectiveBikeTotal = bikeTotal ?? totalApartments;
 
   const publicPassword = (tenant.config as any)?.publicRegistrationPassword;
+  const logoUrl = (tenant.config as any)?.logoUrl || null;
 
   return {
     tenantId: tenant.id,
@@ -76,6 +77,7 @@ export async function getPublicComplexData(tenantSlug: string) {
     complexName: complex.name,
     blocks: blocksData,
     hasPassword: !!publicPassword,
+    logoUrl,
     parking: {
       car:  { total: effectiveCarTotal,  occupied: carOccupied,  available: Math.max(0, effectiveCarTotal  - carOccupied)  },
       moto: { total: effectiveMotoTotal, occupied: motoOccupied, available: Math.max(0, effectiveMotoTotal - motoOccupied) },

@@ -51,13 +51,23 @@ export default async function PublicRegistrationPage({
         
         {/* Header */}
         <header style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", marginBottom: "3rem" }}>
-          <div style={{
-            display: "flex", alignItems: "center", justifyContent: "center", width: "64px", height: "64px",
-            borderRadius: "1.25rem", background: "linear-gradient(135deg, hsl(221, 83%, 53%), hsl(221, 83%, 35%))",
-            boxShadow: "0 0 30px hsl(221, 83%, 40%, 0.4)", marginBottom: "1.5rem"
-          }}>
-            <Building2 size={32} color="white" />
-          </div>
+          {data.logoUrl ? (
+            <div style={{
+              display: "flex", alignItems: "center", justifyContent: "center", width: "100px", height: "100px",
+              borderRadius: "1rem", background: "white", padding: "0.5rem",
+              boxShadow: "0 0 30px hsl(221, 83%, 40%, 0.4)", marginBottom: "1.5rem", overflow: "hidden"
+            }}>
+              <img src={data.logoUrl} alt={`Logo ${data.tenantName}`} style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+            </div>
+          ) : (
+            <div style={{
+              display: "flex", alignItems: "center", justifyContent: "center", width: "64px", height: "64px",
+              borderRadius: "1.25rem", background: "linear-gradient(135deg, hsl(221, 83%, 53%), hsl(221, 83%, 35%))",
+              boxShadow: "0 0 30px hsl(221, 83%, 40%, 0.4)", marginBottom: "1.5rem"
+            }}>
+              <Building2 size={32} color="white" />
+            </div>
+          )}
           
           <div style={{ display: "inline-flex", alignItems: "center", gap: "0.5rem", background: "hsl(221, 83%, 15%)", color: "hsl(221, 83%, 65%)", padding: "0.35rem 1rem", borderRadius: "2rem", fontSize: "0.85rem", fontWeight: 600, marginBottom: "1rem" }}>
             <CheckCircle2 size={14} /> Registro Oficial
