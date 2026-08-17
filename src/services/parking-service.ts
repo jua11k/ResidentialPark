@@ -2,7 +2,84 @@ import { db } from "@/db";
 import { parkingRecords } from "@/db/schema/parking";
 import { vehicles } from "@/db/schema/vehicles";
 import { apartments } from "@/db/schema/residential";
-import { eq, and, desc, isNull } from "drizzle-orm";
+import { eq, and, desc, isNull, ilike, or, sql } from "drizzle-orm";
+
+// ─── BÚSQUEDA AVANZADA PARA LA PORTERÍA ──────────────────────────────────────
+
+export async function getVehiclesByApartment(tenantId: string, apartmentId: string) {
+  const result = await db
+    .select({
+      vehicle: vehicles,
+      isInside: sql<boolean>`CASE WHEN ${parkingRecords.id} IS NOT NULL THEN true ELSE false END`,
+    })
+    .from(vehicles)
+    .leftJoin(
+      parkingRecords,
+      and(
+        eq(parkingRecords.vehicleId, vehicles.id),
+        eq(parkingRecords.status, "inside")
+      )
+    )
+    .where(
+      and(
+        eq(vehicles.tenantId, tenantId),
+        eq(vehicles.apartmentId, apartmentId),
+        isNull(vehicles.deletedAt)
+      )
+    );
+
+  // Parsear resultados para incluir `apartment` (que ya sabemos por el ID, pero la estructura lo espera)
+  // Obtenemos info básica del apartamento para el UI.
+  const aptInfo = await db.query.apartments.findFirst({
+    where: eq(apartments.id, apartmentId),
+    with: { block: true }
+  });
+
+  return result.map(r => ({
+    ...r.vehicle,
+    isInside: r.isInside,
+    apartment: aptInfo,
+  }));
+}
+
+export async function searchVehicles(tenantId: string, query: string) {
+  const result = await db
+    .select({
+      vehicle: vehicles,
+      apartment: apartments,
+      isInside: sql<boolean>`CASE WHEN ${parkingRecords.id} IS NOT NULL THEN true ELSE false END`,
+    })
+    .from(vehicles)
+    .leftJoin(apartments, eq(vehicles.apartmentId, apartments.id))
+    .leftJoin(
+      parkingRecords,
+      and(
+        eq(parkingRecords.vehicleId, vehicles.id),
+        eq(parkingRecords.status, "inside")
+      )
+    )
+    .where(
+      and(
+        eq(vehicles.tenantId, tenantId),
+        isNull(vehicles.deletedAt),
+        or(
+          ilike(vehicles.placa, `%${query}%`),
+          ilike(vehicles.ownerName, `%${query}%`)
+        )
+      )
+    )
+    .limit(20);
+
+  // Como no hicimos join con `blocks` para simplificar, lo estructuramos así
+  return result.map(r => ({
+    ...r.vehicle,
+    isInside: r.isInside,
+    apartment: r.apartment ? {
+      ...r.apartment,
+      // Nota: blocks no viene, podemos omitirlo si no se muestra en el dropdown, o hacer otro join
+    } : null,
+  }));
+}
 
 // ─── BÚSQUEDA DE VEHÍCULO POR PLACA ───────────────────────────────────────────
 /**

@@ -6,6 +6,8 @@ import {
   registerExit,
   getActiveParking,
   getParkingHistory,
+  getVehiclesByApartment,
+  searchVehicles,
 } from "@/services/parking-service";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
@@ -16,6 +18,31 @@ type ActionResponse<T> = {
   error?: string;
   validationErrors?: Record<string, string[]>;
 };
+
+// ─── BÚSQUEDA AVANZADA ────────────────────────────────────────────────────────
+export async function getApartmentVehiclesAction(
+  tenantId: string,
+  apartmentId: string
+): Promise<ActionResponse<any>> {
+  try {
+    const vehicles = await getVehiclesByApartment(tenantId, apartmentId);
+    return { success: true, data: vehicles };
+  } catch (e) {
+    return { success: false, error: "Error al buscar vehículos del apartamento." };
+  }
+}
+
+export async function searchVehiclesAction(
+  tenantId: string,
+  query: string
+): Promise<ActionResponse<any>> {
+  try {
+    const vehicles = await searchVehicles(tenantId, query);
+    return { success: true, data: vehicles };
+  } catch (e) {
+    return { success: false, error: "Error en la búsqueda de vehículos." };
+  }
+}
 
 // ─── BUSCAR VEHÍCULO POR PLACA ────────────────────────────────────────────────
 export async function getVehicleByPlacaAction(

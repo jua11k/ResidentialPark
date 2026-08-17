@@ -45,12 +45,41 @@ export default async function PorteriaPage({
     );
   }
 
+  // Pre-cargar la lista de apartamentos
+  const { blocks, apartments } = await import("@/db/schema/residential");
+  const blocksData = await db.query.blocks.findMany({
+    where: and(
+      eq(blocks.tenantId, session.tenantId),
+      eq(blocks.complexId, complex.id),
+      isNull(blocks.deletedAt)
+    ),
+    with: {
+      apartments: {
+        where: isNull(apartments.deletedAt),
+        columns: { id: true, number: true },
+        orderBy: (apartments, { asc }) => [asc(apartments.number)],
+      }
+    },
+    orderBy: (blocks, { asc }) => [asc(blocks.name)],
+  });
+
+  // Mapear a una lista plana para el select de Autocompletado
+  const initialApartments = blocksData.flatMap(b =>
+    b.apartments.map(a => ({
+      id: a.id,
+      label: `${b.name} · Apto ${a.number}`,
+      blockName: b.name,
+      number: a.number,
+    }))
+  );
+
   return (
     <PorteriaClient
       tenantId={session.tenantId}
       complexId={complex.id}
       complexName={complex.name}
       tenantSlug={tenant_slug}
+      initialApartments={initialApartments}
     />
   );
 }
