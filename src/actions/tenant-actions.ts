@@ -124,7 +124,7 @@ export async function uploadTenantLogoAction(
     const filepath = path.join(uploadDir, filename);
     await writeFile(filepath, buffer);
 
-    const logoUrl = `/uploads/logos/${filename}`;
+    const logoUrl = `/api/uploads/logos/${filename}`;
 
     const updatedConfig = { ...oldConfig, logoUrl };
     await db.update(tenants).set({ config: updatedConfig }).where(eq(tenants.id, tenantId));
