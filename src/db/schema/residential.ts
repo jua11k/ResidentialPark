@@ -75,6 +75,8 @@ export const apartments = residentialParkSchema.table("apartments", {
 }, (table) => ({
   tenantComplexIdx: index("apartments_tenant_complex_idx").on(table.tenantId, table.complexId),
   tenantBlockIdx: index("apartments_tenant_block_idx").on(table.tenantId, table.blockId),
+  // Índice para búsqueda rápida solo por bloque
+  blockIdx: index("apartments_block_idx").on(table.blockId),
   // Índice compuesto para búsqueda rápida bloque+número
   blockNumberIdx: uniqueIndex("apartments_block_number_idx").on(table.blockId, table.number),
 }));

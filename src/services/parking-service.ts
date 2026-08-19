@@ -9,7 +9,15 @@ import { eq, and, desc, isNull, ilike, or, sql } from "drizzle-orm";
 export async function getVehiclesByApartment(tenantId: string, apartmentId: string) {
   const result = await db
     .select({
-      vehicle: vehicles,
+      vehicle: {
+        id: vehicles.id,
+        placa: vehicles.placa,
+        tipo: vehicles.tipo,
+        brand: vehicles.brand,
+        color: vehicles.color,
+        ownerName: vehicles.ownerName,
+        ownerPhone: vehicles.ownerPhone,
+      },
       isInside: sql<boolean>`CASE WHEN ${parkingRecords.id} IS NOT NULL THEN true ELSE false END`,
     })
     .from(vehicles)
@@ -32,7 +40,8 @@ export async function getVehiclesByApartment(tenantId: string, apartmentId: stri
   // Obtenemos info básica del apartamento para el UI.
   const aptInfo = await db.query.apartments.findFirst({
     where: eq(apartments.id, apartmentId),
-    with: { block: true }
+    columns: { id: true, number: true, parkingOccupied: true },
+    with: { block: { columns: { name: true } } }
   });
 
   return result.map(r => ({
@@ -45,8 +54,20 @@ export async function getVehiclesByApartment(tenantId: string, apartmentId: stri
 export async function searchVehicles(tenantId: string, query: string) {
   const result = await db
     .select({
-      vehicle: vehicles,
-      apartment: apartments,
+      vehicle: {
+        id: vehicles.id,
+        placa: vehicles.placa,
+        tipo: vehicles.tipo,
+        brand: vehicles.brand,
+        color: vehicles.color,
+        ownerName: vehicles.ownerName,
+        ownerPhone: vehicles.ownerPhone,
+      },
+      apartment: {
+        id: apartments.id,
+        number: apartments.number,
+        parkingOccupied: apartments.parkingOccupied,
+      },
       isInside: sql<boolean>`CASE WHEN ${parkingRecords.id} IS NOT NULL THEN true ELSE false END`,
     })
     .from(vehicles)
@@ -63,7 +84,7 @@ export async function searchVehicles(tenantId: string, query: string) {
         eq(vehicles.tenantId, tenantId),
         isNull(vehicles.deletedAt),
         or(
-          ilike(vehicles.placa, `%${query}%`),
+          ilike(vehicles.placa, `${query}%`), // Optimizado para B-Tree index
           ilike(vehicles.ownerName, `%${query}%`)
         )
       )
@@ -76,7 +97,6 @@ export async function searchVehicles(tenantId: string, query: string) {
     isInside: r.isInside,
     apartment: r.apartment ? {
       ...r.apartment,
-      // Nota: blocks no viene, podemos omitirlo si no se muestra en el dropdown, o hacer otro join
     } : null,
   }));
 }

@@ -53,6 +53,10 @@ export default async function PorteriaPage({
       eq(blocks.complexId, complex.id),
       isNull(blocks.deletedAt)
     ),
+    columns: {
+      id: true,
+      name: true,
+    },
     with: {
       apartments: {
         where: isNull(apartments.deletedAt),

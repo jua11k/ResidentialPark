@@ -31,6 +31,10 @@ export const vehicles = residentialParkSchema.table("vehicles", {
 }, (table) => ({
   // Índice principal: búsqueda de placa por tenant (portería)
   tenantPlacaIdx: uniqueIndex("vehicles_tenant_placa_idx").on(table.tenantId, table.placa),
+  // Índice directo en placa para acelerar búsquedas ILIKE 'ABC%'
+  placaIdx: index("vehicles_placa_idx").on(table.placa),
+  // Índice en ownerName para acelerar búsquedas ILIKE 'Juan%'
+  ownerNameIdx: index("vehicles_owner_name_idx").on(table.ownerName),
   // Índice para listar vehículos por apartamento (validar max 2)
   apartmentIdx: index("vehicles_apartment_idx").on(table.apartmentId),
 }));
