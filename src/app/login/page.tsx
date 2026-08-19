@@ -173,6 +173,18 @@ export default function LoginPage() {
                     {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                   </button>
                 </div>
+                <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "0.5rem" }}>
+                  <button
+                    type="button"
+                    onClick={() => router.push("/login/recovery")}
+                    style={{
+                      background: "none", border: "none", color: "hsl(221, 83%, 53%)",
+                      fontSize: "0.85rem", cursor: "pointer", padding: 0, textDecoration: "underline"
+                    }}
+                  >
+                    ¿Olvidaste tu contraseña?
+                  </button>
+                </div>
               </div>
 
               {/* Submit */}

@@ -14,6 +14,8 @@ export const users = residentialParkSchema.table("users", {
   username: varchar("username", { length: 100 }), // Para los guardas
   passwordHash: text("password_hash").notNull(),
   sessionToken: text("session_token"),
+  resetToken: varchar("reset_token", { length: 6 }),
+  resetTokenExpires: timestamp("reset_token_expires", { withTimezone: true }),
   lastLoginAt: timestamp("last_login_at", { withTimezone: true }),
   // superadmin: gestiona el SaaS | admin: gestiona un tenant | operator: usa la portería | viewer: solo lectura
   role: varchar("role", { length: 50 }).default("operator").notNull(),

@@ -197,3 +197,91 @@ export async function registerTenantAction(rawData: unknown): Promise<ActionResp
     return { success: false, error: "Error al registrar el conjunto." };
   }
 }
+
+// ─── RECUPERACIÓN DE CONTRASEÑA ──────────────────────────────────────────────
+
+export async function requestPasswordReset(email: string): Promise<ActionResponse<void>> {
+  try {
+    const user = await db.query.users.findFirst({
+      where: and(
+        eq(users.email, email.trim()),
+        isNull(users.deletedAt),
+        eq(users.status, "active")
+      ),
+    });
+
+    if (!user) {
+      // Retornar success para no revelar si el correo existe o no (medida de seguridad)
+      return { success: true };
+    }
+
+    if (user.role !== "superadmin") {
+      return { success: false, error: "Por favor, contacta al administrador de tu conjunto para restablecer tu contraseña." };
+    }
+
+    // Generar código de 6 dígitos
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutos
+
+    await db.update(users)
+      .set({
+        resetToken: code,
+        resetTokenExpires: expiresAt,
+      })
+      .where(eq(users.id, user.id));
+
+    // Llamar a n8n
+    const webhookUrl = "https://n8n.ordersmanagementco.com/webhook/residential-park-password-reset";
+    await fetch(webhookUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: user.email,
+        name: user.name,
+        reset_token: code,
+        event: "password_reset",
+      }),
+    });
+
+    return { success: true };
+  } catch (e: any) {
+    console.error("Error solicitando recuperación de contraseña", e);
+    return { success: false, error: "Ocurrió un error inesperado al procesar la solicitud." };
+  }
+}
+
+export async function resetPasswordWithCode(email: string, code: string, newPassword: string): Promise<ActionResponse<void>> {
+  try {
+    const user = await db.query.users.findFirst({
+      where: and(
+        eq(users.email, email.trim()),
+        eq(users.resetToken, code.trim()),
+        isNull(users.deletedAt),
+        eq(users.status, "active")
+      ),
+    });
+
+    if (!user || !user.resetTokenExpires) {
+      return { success: false, error: "El código es inválido o el usuario no existe." };
+    }
+
+    if (new Date() > user.resetTokenExpires) {
+      return { success: false, error: "El código ha expirado. Por favor solicita uno nuevo." };
+    }
+
+    const hashedPassword = hashPassword(newPassword);
+
+    await db.update(users)
+      .set({
+        passwordHash: hashedPassword,
+        resetToken: null,
+        resetTokenExpires: null,
+      })
+      .where(eq(users.id, user.id));
+
+    return { success: true };
+  } catch (e: any) {
+    console.error("Error restableciendo contraseña", e);
+    return { success: false, error: "Ocurrió un error inesperado al restablecer la contraseña." };
+  }
+}
