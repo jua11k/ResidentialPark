@@ -33,7 +33,8 @@ const navItems = (slug: string, role: string) => {
     { href: `/${slug}/apartamentos`, label: "Apartamentos", icon: Home },
     { href: `/${slug}/historial`, label: "Historial", icon: History },
   ];
-  if (role === "admin" || role === "superadmin") {
+  if (role === "superadmin") {
+    items.push({ href: `/${slug}/configuracion/usuarios`, label: "Usuarios", icon: Users });
     items.push({ href: `/${slug}/configuracion`, label: "Configuración", icon: Settings });
   }
   return items;

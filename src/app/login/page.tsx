@@ -1,20 +1,28 @@
 "use client";
 
-import { useState, useActionState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { loginAction } from "@/actions/auth-actions";
 import { toast } from "sonner";
-import { Building2, Lock, Mail, Eye, EyeOff, Loader2 } from "lucide-react";
+import { Building2, Lock, Mail, Eye, EyeOff, Loader2, User } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [isPending, setIsPending] = useState(false);
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("reason") === "session_expired") {
+      toast.error("Tu sesión fue cerrada porque se inició sesión en otro dispositivo.");
+      router.replace("/login");
+    }
+  }, [router]);
+
   async function handleLogin(formData: FormData) {
     setIsPending(true);
     const rawData = {
-      email: formData.get("email"),
+      usernameOrEmail: formData.get("usernameOrEmail"),
       password: formData.get("password"),
     };
 
@@ -101,13 +109,13 @@ export default function LoginPage() {
           <form noValidate onSubmit={(e) => { e.preventDefault(); handleLogin(new FormData(e.currentTarget)); }}>
             <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
 
-              {/* Email */}
+              {/* Username or Email */}
               <div>
-                <label htmlFor="email" className="input-label">
-                  Correo electrónico
+                <label htmlFor="usernameOrEmail" className="input-label">
+                  Usuario o Correo electrónico
                 </label>
                 <div style={{ position: "relative" }}>
-                  <Mail
+                  <User
                     size={16}
                     style={{
                       position: "absolute", left: "0.875rem", top: "50%",
@@ -116,13 +124,13 @@ export default function LoginPage() {
                     }}
                   />
                   <input
-                    id="email"
-                    name="email"
-                    type="email"
-                    placeholder="operador@conjunto.com"
+                    id="usernameOrEmail"
+                    name="usernameOrEmail"
+                    type="text"
+                    placeholder="guarda01 / admin@conjunto.com"
                     className="input"
                     style={{ paddingLeft: "2.5rem" }}
-                    autoComplete="email"
+                    autoComplete="username"
                     required
                   />
                 </div>

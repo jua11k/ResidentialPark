@@ -17,7 +17,7 @@ type ActionResponse<T> = {
 };
 
 const loginSchema = z.object({
-  email: z.string().trim().email("El formato del correo es inválido"),
+  usernameOrEmail: z.string().trim().min(2, "El usuario o correo es obligatorio"),
   password: z.string().min(1, "La contraseña es obligatoria"),
 });
 
@@ -37,10 +37,12 @@ export async function loginAction(rawData: unknown): Promise<ActionResponse<any>
   }
 
   try {
-    // 1. Buscar usuario por email (globalmente, el primero activo que encuentre)
+    const isEmail = parsed.data.usernameOrEmail.includes("@");
+
+    // 1. Buscar usuario por email (superadmin) o username (admin/guarda)
     const user = await db.query.users.findFirst({
       where: and(
-        eq(users.email, parsed.data.email),
+        isEmail ? eq(users.email, parsed.data.usernameOrEmail) : eq(users.username, parsed.data.usernameOrEmail),
         isNull(users.deletedAt),
         eq(users.status, "active"),
       ),
@@ -65,13 +67,24 @@ export async function loginAction(rawData: unknown): Promise<ActionResponse<any>
       return { success: false, error: "Credenciales incorrectas." };
     }
 
-    // 3. Establecer sesión en cookie httpOnly
+    // 3. Generar token de sesión único e invalidar otras sesiones del mismo usuario
+    const sessionToken = crypto.randomUUID();
+    
+    await db.update(users)
+      .set({ 
+        sessionToken,
+        lastLoginAt: new Date(),
+      })
+      .where(eq(users.id, user.id));
+
+    // 4. Establecer sesión en cookie httpOnly
     const sessionData = JSON.stringify({
       userId: user.id,
       tenantId: tenant.id,
       tenantSlug: tenant.slug,
       role: user.role,
       name: user.name,
+      sessionToken,
     });
 
     const cookieStore = await cookies();
@@ -90,6 +103,22 @@ export async function loginAction(rawData: unknown): Promise<ActionResponse<any>
 
 export async function logoutAction(): Promise<void> {
   const cookieStore = await cookies();
+  const sessionCookie = cookieStore.get("session");
+  
+  if (sessionCookie) {
+    try {
+      const session = JSON.parse(sessionCookie.value);
+      if (session.userId) {
+        // Invalida el token en BD
+        await db.update(users)
+          .set({ sessionToken: null })
+          .where(eq(users.id, session.userId));
+      }
+    } catch {
+      // Ignorar
+    }
+  }
+  
   cookieStore.delete("session");
 }
 
@@ -160,7 +189,7 @@ export async function registerTenantAction(rawData: unknown): Promise<ActionResp
       name: parsed.data.adminName,
       email: parsed.data.email,
       passwordHash: hashedPassword,
-      role: "admin",
+      role: "superadmin", // El creador del conjunto es superadmin
     });
 
     return { success: true, data: { tenantSlug: newTenant.slug } };

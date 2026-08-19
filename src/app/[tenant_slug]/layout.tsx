@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { redirect, notFound } from "next/navigation";
 import { db } from "@/db";
-import { tenants } from "@/db/schema/tenants";
+import { users } from "@/db/schema/users";
 import { eq, isNull, and } from "drizzle-orm";
 import TenantNav from "@/components/shared/TenantNav";
 
@@ -33,16 +33,23 @@ export default async function TenantLayout({
     redirect(`/${session.tenantSlug}/porteria`);
   }
 
-  // 3. Resolver el tenant por slug (Regla 05: Resolución de identidad)
-  const tenant = await db.query.tenants.findFirst({
+  // 3. Obtener usuario y tenant para validar la sesión única
+  const user = await db.query.users.findFirst({
     where: and(
-      eq(tenants.slug, tenant_slug),
-      isNull(tenants.deletedAt),
-      eq(tenants.active, true),
+      eq(users.id, session.userId),
+      isNull(users.deletedAt),
+      eq(users.status, "active")
     ),
+    with: { tenant: true }
   });
 
-  if (!tenant) {
+  if (!user || user.sessionToken !== session.sessionToken) {
+    redirect("/login?reason=session_expired");
+  }
+
+  const tenant = user.tenant;
+
+  if (!tenant || !tenant.active || tenant.deletedAt !== null) {
     notFound();
   }
 

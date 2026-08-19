@@ -24,7 +24,7 @@ export default async function TenantConfigPage({
     redirect("/login");
   }
 
-  if (session.role !== "admin" && session.role !== "superadmin") {
+  if (session.role !== "superadmin") {
     redirect(`/${tenant_slug}/porteria`);
   }
 
