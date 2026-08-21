@@ -1,8 +1,13 @@
 "use server";
 
 import { getSessionAction } from "./auth-actions";
-import { createBulkApartments } from "@/services/apartment-service";
+import { 
+  createBulkApartments, 
+  createBlock, updateBlock, deleteBlock, 
+  createApartment, updateApartment, deleteApartment 
+} from "@/services/apartment-service";
 import type { BulkConfig } from "@/services/apartment-service";
+import type { NewBlock, NewApartment } from "@/db/schema/residential";
 import { revalidatePath } from "next/cache";
 
 export async function createBulkApartmentsAction(
@@ -111,5 +116,87 @@ export async function unblockApartmentAccessAction(
     return { success: true };
   } catch (e: any) {
     return { success: false, error: e.message ?? "Error al desbloquear el acceso." };
+  }
+}
+
+// ─── GESTION MANUAL DE TORRES (BLOQUES) ───────────────────────────────────────
+
+export async function createBlockAction(tenantId: string, complexId: string, data: NewBlock) {
+  const session = await getAdminSession();
+  if (!session || session.tenantId !== tenantId) return { success: false, error: "No autorizado." };
+
+  try {
+    const block = await createBlock(tenantId, { ...data, complexId });
+    revalidatePath(`/${session.tenantSlug}/apartamentos`);
+    return { success: true, block };
+  } catch (e: any) {
+    return { success: false, error: e.message ?? "Error al crear la torre." };
+  }
+}
+
+export async function updateBlockAction(tenantId: string, blockId: string, data: Partial<NewBlock>) {
+  const session = await getAdminSession();
+  if (!session || session.tenantId !== tenantId) return { success: false, error: "No autorizado." };
+
+  try {
+    const block = await updateBlock(tenantId, blockId, data);
+    revalidatePath(`/${session.tenantSlug}/apartamentos`);
+    return { success: true, block };
+  } catch (e: any) {
+    return { success: false, error: e.message ?? "Error al actualizar la torre." };
+  }
+}
+
+export async function deleteBlockAction(tenantId: string, blockId: string) {
+  const session = await getAdminSession();
+  if (!session || session.tenantId !== tenantId) return { success: false, error: "No autorizado." };
+
+  try {
+    await deleteBlock(tenantId, blockId);
+    revalidatePath(`/${session.tenantSlug}/apartamentos`);
+    return { success: true };
+  } catch (e: any) {
+    return { success: false, error: e.message ?? "Error al eliminar la torre." };
+  }
+}
+
+// ─── GESTION MANUAL DE APARTAMENTOS ───────────────────────────────────────────
+
+export async function createApartmentAction(tenantId: string, complexId: string, blockId: string, data: NewApartment) {
+  const session = await getAdminSession();
+  if (!session || session.tenantId !== tenantId) return { success: false, error: "No autorizado." };
+
+  try {
+    const apt = await createApartment(tenantId, { ...data, complexId, blockId });
+    revalidatePath(`/${session.tenantSlug}/apartamentos`);
+    return { success: true, apt };
+  } catch (e: any) {
+    return { success: false, error: e.message ?? "Error al crear el apartamento." };
+  }
+}
+
+export async function updateApartmentAction(tenantId: string, apartmentId: string, data: Partial<NewApartment>) {
+  const session = await getAdminSession();
+  if (!session || session.tenantId !== tenantId) return { success: false, error: "No autorizado." };
+
+  try {
+    const apt = await updateApartment(tenantId, apartmentId, data);
+    revalidatePath(`/${session.tenantSlug}/apartamentos`);
+    return { success: true, apt };
+  } catch (e: any) {
+    return { success: false, error: e.message ?? "Error al actualizar el apartamento." };
+  }
+}
+
+export async function deleteApartmentAction(tenantId: string, apartmentId: string) {
+  const session = await getAdminSession();
+  if (!session || session.tenantId !== tenantId) return { success: false, error: "No autorizado." };
+
+  try {
+    await deleteApartment(tenantId, apartmentId);
+    revalidatePath(`/${session.tenantSlug}/apartamentos`);
+    return { success: true };
+  } catch (e: any) {
+    return { success: false, error: e.message ?? "Error al eliminar el apartamento." };
   }
 }

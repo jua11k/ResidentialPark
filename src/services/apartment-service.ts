@@ -84,6 +84,63 @@ export async function updateApartment(
   return updated;
 }
 
+// ─── ELIMINAR APARTAMENTO (Soft Delete) ───────────────────────────────────────
+export async function deleteApartment(tenantId: string, apartmentId: string) {
+  const [deleted] = await db
+    .update(apartments)
+    .set({ deletedAt: new Date() })
+    .where(and(
+      eq(apartments.id, apartmentId),
+      eq(apartments.tenantId, tenantId)
+    ))
+    .returning();
+  return deleted;
+}
+
+// ─── CREAR BLOQUE ─────────────────────────────────────────────────────────────
+import type { NewBlock } from "@/db/schema/residential";
+
+export async function createBlock(tenantId: string, data: NewBlock) {
+  const [block] = await db.insert(blocks).values({
+    ...data,
+    tenantId,
+  }).returning();
+  return block;
+}
+
+// ─── ACTUALIZAR BLOQUE ────────────────────────────────────────────────────────
+export async function updateBlock(
+  tenantId: string,
+  blockId: string,
+  data: Partial<NewBlock>,
+) {
+  const [updated] = await db
+    .update(blocks)
+    .set({ ...data, updatedAt: new Date() })
+    .where(and(
+      eq(blocks.id, blockId),
+      eq(blocks.tenantId, tenantId),
+      isNull(blocks.deletedAt),
+    ))
+    .returning();
+  return updated;
+}
+
+// ─── ELIMINAR BLOQUE (Soft Delete) ────────────────────────────────────────────
+export async function deleteBlock(tenantId: string, blockId: string) {
+  // Opcional: También se podrían hacer soft delete de los apartamentos asociados si fuera necesario,
+  // pero mantendremos solo el borrado del bloque por simplicidad. Si un bloque está borrado, la app no debería mostrar sus apartamentos.
+  const [deleted] = await db
+    .update(blocks)
+    .set({ deletedAt: new Date() })
+    .where(and(
+      eq(blocks.id, blockId),
+      eq(blocks.tenantId, tenantId)
+    ))
+    .returning();
+  return deleted;
+}
+
 export type BulkConfig = 
   | { type: "floor-based"; floors: number; unitsPerFloor: number; unitDigits?: number }
   | { type: "sequential"; totalUnits: number };
