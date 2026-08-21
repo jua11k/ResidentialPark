@@ -30,7 +30,11 @@ export default function BlockModal({
       if (block) {
         res = await updateBlockAction(tenantId, block.id, { name: name.trim() });
       } else {
-        res = await createBlockAction(tenantId, complexId, { name: name.trim() });
+        res = await createBlockAction(tenantId, complexId, { 
+          name: name.trim(),
+          tenantId,
+          complexId,
+        });
       }
 
       if (res.success) {

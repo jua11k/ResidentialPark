@@ -30,15 +30,22 @@ export default function ApartmentModal({
     setIsSubmitting(true);
     try {
       let res;
-      const data = { 
-        number: number.trim(),
-        floor: floor ? parseInt(floor) : null
-      };
-
+      
       if (apartment) {
-        res = await updateApartmentAction(tenantId, apartment.id, data);
+        const updateData = { 
+          number: number.trim(),
+          floor: floor ? parseInt(floor) : null
+        };
+        res = await updateApartmentAction(tenantId, apartment.id, updateData);
       } else {
-        res = await createApartmentAction(tenantId, complexId, blockId, data);
+        const createData = { 
+          number: number.trim(),
+          floor: floor ? parseInt(floor) : null,
+          tenantId,
+          complexId,
+          blockId,
+        };
+        res = await createApartmentAction(tenantId, complexId, blockId, createData);
       }
 
       if (res.success) {
