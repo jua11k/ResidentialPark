@@ -1,8 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { Settings } from "lucide-react";
+import { Settings, Plus, Edit2, Trash2 } from "lucide-react";
 import BulkConfigModal from "./BulkConfigModal";
+import BlockModal from "./BlockModal";
+import ApartmentModal from "./ApartmentModal";
+import DeleteConfirmDialog from "./DeleteConfirmDialog";
 import { toast } from "sonner";
 
 interface ApartamentosClientProps {
@@ -30,6 +33,14 @@ export default function ApartamentosClient({
   const [selectedApt, setSelectedApt] = useState<any | null>(null);
   const [blockReason, setBlockReason] = useState("");
   const [isBlocking, setIsBlocking] = useState(false);
+
+  // Nuevos estados para Modales CRUD
+  const [showBlockModal, setShowBlockModal] = useState(false);
+  const [editingBlock, setEditingBlock] = useState<any | null>(null);
+  const [showAptModal, setShowAptModal] = useState(false);
+  const [editingApt, setEditingApt] = useState<any | null>(null);
+  const [targetBlockIdForApt, setTargetBlockIdForApt] = useState<string>("");
+  const [deleteItem, setDeleteItem] = useState<{ type: "block"|"apartment"; item: any } | null>(null);
 
   // Calcular la capacidad de parqueaderos (si es null asume totalApartments)
   const carTotal = parkingData.car.total ?? totalApartments;
@@ -80,10 +91,16 @@ export default function ApartamentosClient({
             {complexName} · {blocksList.length} bloque{blocksList.length !== 1 ? "s" : ""} · {totalApartments} apartamentos
           </p>
         </div>
-        <button onClick={() => setShowBulkConfig(true)} className="btn-secondary">
-          <Settings size={16} />
-          Configuración Masiva
-        </button>
+        <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
+          <button onClick={() => { setEditingBlock(null); setShowBlockModal(true); }} className="btn-secondary">
+            <Plus size={16} />
+            Añadir Torre
+          </button>
+          <button onClick={() => setShowBulkConfig(true)} className="btn-secondary">
+            <Settings size={16} />
+            Configuración Masiva
+          </button>
+        </div>
       </div>
 
       {/* Stats Fila 1: Resumen General */}
@@ -158,22 +175,34 @@ export default function ApartamentosClient({
             return (
               <div key={block.id} className="card" style={{ padding: "1.25rem" }}>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1rem", flexWrap: "wrap", gap: "0.5rem" }}>
-                  <h2 style={{ fontWeight: 700, fontSize: "1rem", color: "hsl(210, 40%, 98%)", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                    🏗️ {block.name}
-                  </h2>
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                    <h2 style={{ fontWeight: 700, fontSize: "1rem", color: "hsl(210, 40%, 98%)", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                      🏗️ {block.name}
+                    </h2>
+                    <button onClick={() => { setEditingBlock(block); setShowBlockModal(true); }} style={{ color: "hsl(215, 25%, 65%)", background: "transparent", border: "none", cursor: "pointer", padding: "0.25rem" }}>
+                      <Edit2 size={14} />
+                    </button>
+                    <button onClick={() => setDeleteItem({ type: "block", item: block })} style={{ color: "hsl(0, 72%, 65%)", background: "transparent", border: "none", cursor: "pointer", padding: "0.25rem" }}>
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
                   <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
                     <span className="badge badge-neutral">{block.apartments.length} unidades</span>
                     {occupiedInBlock > 0 && (
                       <span className="badge badge-danger">🔴 {occupiedInBlock} ocupado{occupiedInBlock !== 1 ? "s" : ""}</span>
                     )}
+                    <button 
+                      onClick={() => { setTargetBlockIdForApt(block.id); setEditingApt(null); setShowAptModal(true); }}
+                      style={{ background: "hsl(220, 20%, 22%)", color: "white", border: "none", borderRadius: "0.25rem", padding: "0.25rem 0.5rem", fontSize: "0.75rem", cursor: "pointer", display: "flex", alignItems: "center", gap: "0.25rem" }}
+                    >
+                      <Plus size={12} /> Apt
+                    </button>
                   </div>
                 </div>
 
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(80px, 1fr))", gap: "0.5rem" }}>
                   {block.apartments.map((apt: any) => (
-                    <button
-                      type="button"
-                      onClick={() => { setSelectedApt(apt); setBlockReason(apt.blockReason || ""); }}
+                    <div
                       key={apt.id}
                       style={{
                         padding: "0.625rem",
@@ -181,9 +210,10 @@ export default function ApartamentosClient({
                         border: `1px solid ${apt.accessBlocked ? "hsl(0, 72%, 35%)" : apt.parkingOccupied ? "hsl(35, 100%, 30%)" : "hsl(220, 20%, 22%)"}`,
                         background: apt.accessBlocked ? "hsl(0, 60%, 12%)" : apt.parkingOccupied ? "hsl(35, 100%, 8%)" : "hsl(220, 35%, 11%)",
                         textAlign: "center",
-                        transition: "all 0.15s ease",
-                        cursor: "pointer",
                         position: "relative",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "0.25rem"
                       }}
                     >
                       {apt.accessBlocked && (
@@ -191,13 +221,39 @@ export default function ApartamentosClient({
                           🔒
                         </div>
                       )}
-                      <p style={{ fontWeight: 700, fontSize: "0.9375rem", color: apt.accessBlocked ? "hsl(0, 72%, 65%)" : apt.parkingOccupied ? "hsl(35, 100%, 65%)" : "hsl(210, 40%, 85%)" }}>
-                        {apt.number}
-                      </p>
-                      <p style={{ fontSize: "0.625rem", marginTop: "0.25rem", color: apt.accessBlocked ? "hsl(0, 72%, 55%)" : apt.parkingOccupied ? "hsl(35, 100%, 55%)" : "hsl(142, 71%, 50%)" }}>
-                        {apt.accessBlocked ? "Bloqueado" : apt.parkingOccupied ? "Ocupado" : "Libre"}
-                      </p>
-                    </button>
+                      
+                      {/* Botones de acción pequeña */}
+                      <div style={{ display: "flex", justifyContent: "center", gap: "0.25rem", marginBottom: "0.25rem" }}>
+                        <button 
+                          onClick={() => { setTargetBlockIdForApt(block.id); setEditingApt(apt); setShowAptModal(true); }} 
+                          style={{ background: "transparent", border: "none", color: "hsl(215, 25%, 65%)", cursor: "pointer", padding: "2px" }}
+                          title="Editar"
+                        >
+                          <Edit2 size={12} />
+                        </button>
+                        <button 
+                          onClick={() => setDeleteItem({ type: "apartment", item: apt })} 
+                          style={{ background: "transparent", border: "none", color: "hsl(0, 72%, 65%)", cursor: "pointer", padding: "2px" }}
+                          title="Eliminar"
+                        >
+                          <Trash2 size={12} />
+                        </button>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => { setSelectedApt(apt); setBlockReason(apt.blockReason || ""); }}
+                        style={{ background: "transparent", border: "none", cursor: "pointer", padding: 0, width: "100%" }}
+                        title="Bloquear/Desbloquear Acceso"
+                      >
+                        <p style={{ fontWeight: 700, fontSize: "0.9375rem", color: apt.accessBlocked ? "hsl(0, 72%, 65%)" : apt.parkingOccupied ? "hsl(35, 100%, 65%)" : "hsl(210, 40%, 85%)" }}>
+                          {apt.number}
+                        </p>
+                        <p style={{ fontSize: "0.625rem", marginTop: "0.25rem", color: apt.accessBlocked ? "hsl(0, 72%, 55%)" : apt.parkingOccupied ? "hsl(35, 100%, 55%)" : "hsl(142, 71%, 50%)" }}>
+                          {apt.accessBlocked ? "Bloqueado" : apt.parkingOccupied ? "Ocupado" : "Libre"}
+                        </p>
+                      </button>
+                    </div>
                   ))}
                 </div>
               </div>
@@ -266,6 +322,38 @@ export default function ApartamentosClient({
             </div>
           </div>
         </div>
+      )}
+
+      {/* Nuevos Modales CRUD */}
+      {showBlockModal && (
+        <BlockModal
+          tenantId={tenantId}
+          complexId={complexId}
+          block={editingBlock}
+          onClose={() => setShowBlockModal(false)}
+          onSuccess={() => setShowBlockModal(false)}
+        />
+      )}
+
+      {showAptModal && (
+        <ApartmentModal
+          tenantId={tenantId}
+          complexId={complexId}
+          blockId={targetBlockIdForApt}
+          apartment={editingApt}
+          onClose={() => setShowAptModal(false)}
+          onSuccess={() => setShowAptModal(false)}
+        />
+      )}
+
+      {deleteItem && (
+        <DeleteConfirmDialog
+          tenantId={tenantId}
+          item={deleteItem.item}
+          type={deleteItem.type}
+          onClose={() => setDeleteItem(null)}
+          onSuccess={() => setDeleteItem(null)}
+        />
       )}
     </div>
   );
